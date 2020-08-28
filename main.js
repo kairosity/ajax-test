@@ -1,9 +1,8 @@
-const baseUrl = "https://ci-swapi.herokuapp.com/api/";
 
-function getData(type, cb){ //takes 2 params type and cb func.
+function getData(url, cb){ //takes 2 params type and cb func.
     var xhr = new XMLHttpRequest(); //inbuilt js object to consume APIs
 
-    xhr.open("GET", baseUrl + type + "/"); //get used to get data from server - adds the type to the url to get full api request
+    xhr.open("GET", url); //get used to get data from server - adds the type to the url to get full api request
     xhr.send(); //to send the above request
 
     xhr.onreadystatechange = function() {
@@ -24,12 +23,29 @@ function getTableHeaders(obj){
     return `<tr>${tableHeaders}</tr>`; //returns a row with all the headers 
 }
 
-function writeToDocument(type) { //func to write the results to the page - takes the type requested as a param. 
+function generatePaginationButtons(next, prev){
+    if (next && prev) {
+        return `<button onclick="writeToDocument('${prev}')">Previous</button>
+                <button onclick="writeToDocument('${next}')">Next</button>`;
+    } else if (next && !prev) {
+        return `<button onclick="writeToDocument('${next}')">Next</button>`;
+    } else if (!next && prev) {
+        return `<button onclick="writeToDocument('${prev}')">Previous</button>`;
+    }
+}
+
+function writeToDocument(url) { //func to write the results to the page - takes the type requested as a param. 
     var tableRows = []; // empty tr arr
     var el = document.getElementById("data"); //selects the div area to place the data in.
     el.innerHTML = ""; // empty out the innerhtml.
 
-    getData(type, function(data){ //calls the getData func with the type from above and the cb func looking for the data. That is the cb in the original func declaration the "data" param here is the JSON.parse(this.responseText) in the original.
+    getData(url, function(data){ //calls the getData func with the type from above and the cb func looking for the data. That is the cb in the original func declaration the "data" param here is the JSON.parse(this.responseText) in the original.
+        
+        var pagination;
+        if (data.next || data.previous) { //if there is a next or previous in the Obj then..
+            pagination = generatePaginationButtons(data.next, data.previous); //run this function defined above.
+        }
+
         data = data.results; //redefines data to include the results - results??
         var tableHeaders = getTableHeaders(data[0]); // the first element in the data will be the keys obj. 
 
@@ -44,7 +60,7 @@ function writeToDocument(type) { //func to write the results to the page - takes
             tableRows.push(`<tr>${dataRow}</tr>`);
             });
 
-            el.innerHTML = `<table>${tableHeaders}${tableRows}</table>`;
+            el.innerHTML = `<table>${tableHeaders}${tableRows}</table>${pagination}`;
     });
         
 }
